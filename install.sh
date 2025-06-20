@@ -56,9 +56,11 @@ echo "✅ Service installed and started: tg2bale.service"
 # نصب CLI tool به نام teltobale
 echo "⚙️ Installing 'teltobale' CLI command..."
 
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 cat > /usr/local/bin/teltobale <<EOF
 #!/bin/bash
-python3 $(pwd)/cli.py "\$@"
+python3 $SCRIPT_PATH/cli.py "\$@"
 EOF
 
 chmod +x /usr/local/bin/teltobale
