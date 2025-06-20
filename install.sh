@@ -1,19 +1,13 @@
 #!/bin/bash
 
-echo "📦 Telegram to Bale - Installer"
-echo "-------------------------------"
+echo "📦 Installing Telegram-to-Bale Bot"
+echo "-----------------------------------"
 
-# نصب پیش‌نیازها
-echo "🔧 Installing dependencies..."
-apt update -y && apt install python3 python3-pip git curl -y
+# نصب پایتون و پیش‌نیازها
+apt update -y && apt install python3 python3-pip git curl ffmpeg -y
+pip3 install telethon requests python-dotenv pillow
 
-# کلون کردن پروژه (اگر خودشون نخواستن با git نصب کنن)
-# git clone https://github.com/ach1992/telegram-to-bale.git
-
-# نصب کتابخانه‌های پایتون
-pip3 install telethon requests python-dotenv
-
-# گرفتن اطلاعات از کاربر
+# دریافت اطلاعات از کاربر
 read -p "👉 Enter your Telegram API ID: " api_id
 read -p "👉 Enter your Telegram API Hash: " api_hash
 read -p "👉 Enter your Bale Bot Token: " bale_token
@@ -30,7 +24,28 @@ SOURCE_CHANNELS=$channels
 EOF
 
 echo "✅ .env file created."
-echo "🚀 Running the bot now..."
 
-# اجرای فایل اصلی
-python3 main.py
+# ساخت systemd سرویس
+echo "🛠 Setting up systemd service..."
+
+cat > /etc/systemd/system/tg2bale.service <<EOF
+[Unit]
+Description=Telegram to Bale Forwarder
+After=network.target
+
+[Service]
+WorkingDirectory=$(pwd)
+ExecStart=$(which python3) $(pwd)/main.py
+Restart=on-failure
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable tg2bale.service
+systemctl start tg2bale.service
+
+echo "✅ Service installed and running: tg2bale"
