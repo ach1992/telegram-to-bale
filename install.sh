@@ -3,8 +3,10 @@
 echo "📦 Installing Telegram-to-Bale Bot"
 echo "-----------------------------------"
 
-# نصب پایتون و پیش‌نیازها
+# نصب پکیج‌های مورد نیاز
 apt update -y && apt install python3 python3-pip git curl ffmpeg -y
+
+# نصب کتابخانه‌های پایتون
 pip3 install telethon requests python-dotenv pillow
 
 # دریافت اطلاعات از کاربر
@@ -25,7 +27,7 @@ EOF
 
 echo "✅ .env file created."
 
-# ساخت systemd سرویس
+# ساخت سرویس systemd
 echo "🛠 Setting up systemd service..."
 
 cat > /etc/systemd/system/tg2bale.service <<EOF
@@ -44,8 +46,24 @@ User=root
 WantedBy=multi-user.target
 EOF
 
+# فعال‌سازی سرویس
 systemctl daemon-reload
 systemctl enable tg2bale.service
 systemctl start tg2bale.service
 
-echo "✅ Service installed and running: tg2bale"
+echo "✅ Service installed and started: tg2bale.service"
+
+# نصب CLI tool به نام teltobale
+echo "⚙️ Installing 'teltobale' CLI command..."
+
+cat > /usr/local/bin/teltobale <<EOF
+#!/bin/bash
+python3 $(pwd)/cli.py "\$@"
+EOF
+
+chmod +x /usr/local/bin/teltobale
+
+echo "✅ You can now use 'teltobale' anywhere:"
+echo "   - teltobale status"
+echo "   - teltobale restart"
+echo "   - teltobale uninstall"
