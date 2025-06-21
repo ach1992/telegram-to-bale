@@ -87,7 +87,7 @@ teltobale uninstall  # Uninstall the bot
 
 ---
 
-🧪 Developer Setup
+## 🧪 Developer Setup
 
 ```
 git clone https://github.com/ach1992/telegram-to-bale.git
@@ -99,3 +99,44 @@ python setup.py
 ```
 
 ---
+
+## 🧼 Uninstall
+
+```
+teltobale uninstall
+```
+
+---
+
+## 📁 Project Structure
+
+```
+├── main.py               # Bot logic
+├── cli.py                # CLI tool
+├── setup.py              # Setup wizard
+├── setup.sh              # Full auto installer
+├── install.sh            # Curl-based bootstrap
+├── uninstall.sh          # Full cleanup
+├── requirements.txt
+├── .env                  # Credentials file (auto-generated)
+├── temp/                 # Temp folder for media
+```
+
+---
+
+## ❗ Troubleshooting
+
+- Media not sending?
+Ensure proper file extensions, and that ffmpeg is installed.
+
+- 401/403 errors from Bale?
+Your bot may not be added to the channel as admin, or token is wrong.
+
+- Telegram login fails?
+Make sure your server is not blocked by Telegram.
+
+---
+
+## 📃 License
+
+MIT License © 2025 ach1992
