@@ -1,27 +1,27 @@
 #!/bin/bash
 
-echo "📦 Installing Telegram-to-Bale Bot with isolated Python environment"
-echo "--------------------------------------------------------------------"
+echo "📦 Setting up Telegram-to-Bale Bot"
+echo "----------------------------------"
 
-# Install system packages
-apt update -y && apt install python3 python3-pip python3-venv git curl ffmpeg -y
+# نصب پکیج‌های مورد نیاز
+apt update -y && apt install python3 python3-pip git curl ffmpeg -y
 
-# Create virtualenv
+# ساخت محیط مجازی پایتون
 python3 -m venv .venv
 source .venv/bin/activate
 
-# Installing Python packages in an isolated environment
-pip install --upgrade pip
-pip install telethon requests python-dotenv pillow
+# نصب کتابخانه‌ها در محیط مجازی
+pip install --break-system-packages telethon requests python-dotenv pillow
 
-# Get information from the user
+# دریافت اطلاعات از کاربر
 read -p "👉 Enter your Telegram API ID: " api_id
 read -p "👉 Enter your Telegram API Hash: " api_hash
+read -p "👉 Enter your Telegram Phone Number (with +98 or +1): " phone
 read -p "👉 Enter your Bale Bot Token: " bale_token
 read -p "👉 Enter your Bale Channel Chat ID: " chat_id
 read -p "👉 Enter Telegram Channels (comma-separated): " channels
 
-# Create .env file
+# ذخیره در فایل .env
 cat > .env <<EOF
 API_ID=$api_id
 API_HASH=$api_hash
@@ -32,7 +32,16 @@ EOF
 
 echo "✅ .env file created."
 
-# Create systemd service
+# ساخت فایل session
+echo "🔐 Logging into Telegram to create session..."
+python3 -c "
+from telethon.sync import TelegramClient
+client = TelegramClient('session', $api_id, '$api_hash')
+client.start(phone='$phone')
+print('✅ Session created successfully!')
+"
+
+# ساخت سرویس systemd
 echo "🛠 Setting up systemd service..."
 
 cat > /etc/systemd/system/tg2bale.service <<EOF
@@ -42,7 +51,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=$(pwd)
-ExecStart=$(pwd)/.venv/bin/python main.py
+ExecStart=$(pwd)/.venv/bin/python $(pwd)/main.py
 Restart=on-failure
 RestartSec=5
 User=root
@@ -51,20 +60,18 @@ User=root
 WantedBy=multi-user.target
 EOF
 
-# Service activation
 systemctl daemon-reload
 systemctl enable tg2bale.service
-systemctl start tg2bale.service
+systemctl restart tg2bale.service
 
 echo "✅ Service installed and started: tg2bale.service"
 
-# Install CLI tool called teltobale
+# نصب CLI به عنوان teltobale
 echo "⚙️ Installing 'teltobale' CLI command..."
 
-CLI_PATH="$(realpath ./cli.py)"
 cat > /usr/local/bin/teltobale <<EOF
 #!/bin/bash
-$(pwd)/.venv/bin/python $CLI_PATH "\$@"
+$(pwd)/.venv/bin/python $(pwd)/cli.py "\$@"
 EOF
 
 chmod +x /usr/local/bin/teltobale
