@@ -4,6 +4,7 @@ import os
 import requests
 import asyncio
 import subprocess
+import mimetypes
 
 # Load environment variables
 load_dotenv()
@@ -20,69 +21,59 @@ BALE_API = f"https://tapi.bale.ai/bot{bale_bot_token}"
 os.makedirs("temp", exist_ok=True)
 
 def send_text_to_bale(text):
-    payload = {
-        "chat_id": bale_chat_id,
-        "text": text
-    }
+    payload = {"chat_id": bale_chat_id, "text": text}
     try:
         r = requests.post(f"{BALE_API}/sendMessage", json=payload)
-        if r.status_code == 200:
-            print(f"[✅ Text] Sent: {text[:40]}...")
-        else:
-            print(f"[❌ Text] Failed: {r.status_code}")
+        print(f"[✅ Text] Sent: {text[:40]}..." if r.status_code == 200 else f"[❌ Text] Failed: {r.status_code}")
     except Exception as e:
         print(f"[⚠️ Text Error] {e}")
 
-def send_fallback_preview(image_path, caption):
-    with open(image_path, 'rb') as f:
-        files = {'photo': ('preview.jpg', f)}
-        data = {
-            'chat_id': bale_chat_id,
-            'caption': caption
-        }
-        try:
-            r = requests.post(f"{BALE_API}/sendPhoto", data=data, files=files)
-            print(f"[📷 Fallback Preview] Status: {r.status_code}")
-        except Exception as e:
-            print(f"[❌ Preview Error] {e}")
-
-def send_file_to_bale(file_path, caption=None):
-    file_name = os.path.basename(file_path)
-    ext = os.path.splitext(file_name)[-1].lower()
-    success = False
+def send_media_to_bale(file_path, caption=None):
+    ext = os.path.splitext(file_path)[-1].lower()
+    endpoint = "sendDocument"
+    if ext in [".jpg", ".jpeg", ".png", ".webp"]:
+        endpoint = "sendPhoto"
+    elif ext in [".mp4", ".mov", ".mkv"]:
+        endpoint = "sendVideo"
 
     for attempt in range(3):
         try:
             with open(file_path, 'rb') as f:
-                files = {'document': (file_name, f)}
+                files = {'photo' if endpoint == 'sendPhoto' else 'video' if endpoint == 'sendVideo' else 'document': (os.path.basename(file_path), f)}
                 data = {'chat_id': bale_chat_id}
                 if caption:
                     data['caption'] = caption
-                r = requests.post(f"{BALE_API}/sendDocument", data=data, files=files)
+                r = requests.post(f"{BALE_API}/{endpoint}", data=data, files=files)
                 if r.status_code == 200:
-                    print(f"[✅ File] Sent: {file_name}")
-                    success = True
-                    break
+                    print(f"[✅ File] Sent via {endpoint}: {file_path}")
+                    return
                 else:
                     print(f"[❌ File] Attempt {attempt+1} failed: {r.status_code}")
         except Exception as e:
             print(f"[⚠️ File Error] Attempt {attempt+1}: {e}")
 
-    if not success:
+    # fallback: thumbnail for video
+    if ext in [".mp4", ".mov", ".mkv"]:
         preview_path = f"{file_path}.jpg"
-        if ext in [".mp4", ".mov", ".mkv"]:
-            subprocess.run([
-                "ffmpeg", "-i", file_path, "-ss", "00:00:01.000", "-vframes", "1", preview_path,
-                "-y", "-loglevel", "error"
-            ])
-            caption_fallback = (caption or "") + "\n#video_failed"
-            if os.path.exists(preview_path):
-                send_fallback_preview(preview_path, caption_fallback)
-                os.remove(preview_path)
-        elif ext in [".jpg", ".jpeg", ".png", ".webp"]:
-            caption_fallback = (caption or "") + "\n#image_failed"
-            send_text_to_bale(caption_fallback)
-    os.remove(file_path)
+        subprocess.run([
+            "ffmpeg", "-i", file_path, "-ss", "00:00:01.000", "-vframes", "1", preview_path,
+            "-y", "-loglevel", "error"
+        ])
+        if os.path.exists(preview_path):
+            send_fallback_preview(preview_path, (caption or "") + "\n#video_failed")
+            os.remove(preview_path)
+    elif ext in [".jpg", ".jpeg", ".png", ".webp"]:
+        send_text_to_bale((caption or "") + "\n#image_failed")
+
+def send_fallback_preview(image_path, caption):
+    with open(image_path, 'rb') as f:
+        files = {'photo': ('preview.jpg', f)}
+        data = {'chat_id': bale_chat_id, 'caption': caption}
+        try:
+            r = requests.post(f"{BALE_API}/sendPhoto", data=data, files=files)
+            print(f"[📷 Fallback Preview] Status: {r.status_code}")
+        except Exception as e:
+            print(f"[❌ Preview Error] {e}")
 
 @client.on(events.NewMessage(chats=source_channels))
 async def handler(event):
@@ -90,14 +81,25 @@ async def handler(event):
     caption = message.text or ""
 
     if message.text and not message.media:
-        send_text_to_bale(message.text)
+        send_text_to_bale(caption)
         return
 
     try:
-        file_path = f"temp/{message.id}"
+        ext = ""
+        if message.photo:
+            ext = ".jpg"
+        elif message.video:
+            ext = ".mp4"
+        elif message.document and message.file:
+            mime = message.file.mime_type
+            ext = mimetypes.guess_extension(mime or '') or ""
+
+        file_path = f"temp/{message.id}{ext}"
         await client.download_media(message, file_path)
+
         if os.path.exists(file_path):
-            send_file_to_bale(file_path, caption)
+            send_media_to_bale(file_path, caption)
+            os.remove(file_path)
     except Exception as e:
         print(f"[❌ Download/Send Error] {e}")
 
