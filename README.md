@@ -52,8 +52,6 @@ Just run this single line:
 bash <(curl -Ls https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh)
 ```
 
----
-
 ## This will:
 
 - Clone the project
