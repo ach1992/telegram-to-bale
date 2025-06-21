@@ -60,3 +60,42 @@ bash <(curl -Ls https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/
 - Create a Telegram session
 - Create and run systemd service
 - Register teltobale CLI tool
+
+---
+
+## 🔁 Running the Bot
+
+After install, the bot will run in the background automatically.
+To check or control the bot:
+
+```
+sudo systemctl status tg2bale.service
+sudo systemctl restart tg2bale.service
+```
+
+---
+
+## 💻 CLI Tool: teltobale
+A global command is created:
+
+```
+teltobale status     # Check bot status
+teltobale restart    # Restart the bot
+teltobale stop       # Stop the bot
+teltobale uninstall  # Uninstall the bot
+```
+
+---
+
+🧪 Developer Setup
+
+```
+git clone https://github.com/ach1992/telegram-to-bale.git
+cd telegram-to-bale
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python setup.py
+```
+
+---
