@@ -7,7 +7,7 @@ echo "-----------------------------------"
 apt update -y && apt install python3 python3-pip git curl ffmpeg -y
 
 # نصب کتابخانه‌های پایتون مورد نیاز
-pip3 install telethon requests python-dotenv pillow
+pip3 install --break-system-packages telethon requests python-dotenv pillow
 
 # دریافت اطلاعات از کاربر
 read -p "👉 Enter your Telegram API ID: " api_id
