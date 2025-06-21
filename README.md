@@ -1,3 +1,9 @@
+<p align="center">
+ <a href="./README.fa.md">
+ فارسی
+ </a>
+</p>
+
 # 🤖 Telegram to Bale Forwarder Bot
 
 A fully automated Python bot that listens to specific Telegram channels and forwards all messages (text, photos, videos, and documents) to your **Bale messenger** channel using the Bale Bot API.
