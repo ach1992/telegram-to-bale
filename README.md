@@ -48,9 +48,9 @@ To use this bot, you’ll need a few keys and IDs. Here’s what they are and ho
 
 Just run this single line:
 
-```bash
+```
 bash <(curl -Ls https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh)
-```bash
+```
 
 ---
 
