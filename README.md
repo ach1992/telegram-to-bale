@@ -34,7 +34,7 @@ To use this bot, you’ll need a few keys and IDs. Here’s what they are and ho
 | **API Hash** | Your Telegram app's secret hash | Comes with the API ID above on Telegram's developer portal. |
 | **Phone Number** | Your phone number used to log in to Telegram | Enter it in international format (e.g., +989123456789). |
 | **Bale Bot Token** | Token for your bot on Bale Messenger | Create a bot at [tapi.bale.ai](https://tapi.bale.ai), and get your bot token (starts with `bot...`). |
-| **Bale Channel's Chat ID** | Numeric ID of your **Bale channel** | Add the bot as an admin, send a message in your Bale channel, then call: `https://tapi.bale.ai/bot<YourToken>/getUpdates` and copy the numeric `chat_id` (starts with `-100`). |
+| **Bale Channel's Chat ID** | Numeric ID of your **Bale channel** | Add the bot as an admin, send a message in your Bale channel, then call: `https://tapi.bale.ai/bot<YourToken>/getUpdates` and copy the numeric `chat_id`. |
 | **Telegram Channels** | Telegram channel usernames to monitor | Example: `@newsch1,@mediahub2` (you must be a member). |
 
 > ⚠️ Be sure to add your Bale bot as **admin** in your Bale channel.
