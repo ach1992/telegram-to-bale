@@ -1,102 +1,106 @@
-import os
-import asyncio
-import logging
-import requests
 from telethon import TelegramClient, events
 from dotenv import load_dotenv
+import os
+import requests
+import asyncio
+import subprocess
 
 # Load environment variables
 load_dotenv()
 
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-SOURCE_CHANNELS = os.getenv("SOURCE_CHANNELS", "").split(',')
-BALE_BOT_TOKEN = os.getenv("BALE_BOT_TOKEN")
-BALE_CHAT_ID = os.getenv("BALE_CHAT_ID")
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
+bale_bot_token = os.getenv("BALE_BOT_TOKEN")
+bale_chat_id = os.getenv("BALE_CHAT_ID")
+source_channels = os.getenv("SOURCE_CHANNELS").split(',')
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("tg2bale")
+client = TelegramClient('session', api_id, api_hash)
+BALE_API = f"https://tapi.bale.ai/bot{bale_bot_token}"
 
-client = TelegramClient('session', API_ID, API_HASH)
+os.makedirs("temp", exist_ok=True)
 
-
-async def send_text_to_bale(text: str):
-    url = f"https://tapi.bale.ai/bot{BALE_BOT_TOKEN}/sendMessage"
-    data = {
-        "chat_id": BALE_CHAT_ID,
+def send_text_to_bale(text):
+    payload = {
+        "chat_id": bale_chat_id,
         "text": text
     }
+    try:
+        r = requests.post(f"{BALE_API}/sendMessage", json=payload)
+        if r.status_code == 200:
+            print(f"[✅ Text] Sent: {text[:40]}...")
+        else:
+            print(f"[❌ Text] Failed: {r.status_code}")
+    except Exception as e:
+        print(f"[⚠️ Text Error] {e}")
 
-    for attempt in range(3):
+def send_fallback_preview(image_path, caption):
+    with open(image_path, 'rb') as f:
+        files = {'photo': ('preview.jpg', f)}
+        data = {
+            'chat_id': bale_chat_id,
+            'caption': caption
+        }
         try:
-            response = requests.post(url, data=data)
-            if response.ok:
-                logger.info("✅ Text sent to Bale")
-                return True
-            else:
-                logger.warning(f"⚠️ Bale text error: {response.text}")
+            r = requests.post(f"{BALE_API}/sendPhoto", data=data, files=files)
+            print(f"[📷 Fallback Preview] Status: {r.status_code}")
         except Exception as e:
-            logger.error(f"❌ Text send error: {e}")
-        await asyncio.sleep(2)
-    return False
+            print(f"[❌ Preview Error] {e}")
 
-
-async def send_media_to_bale(media_path: str, caption: str = ""):
-    file_ext = os.path.splitext(media_path)[1].lower()
-    if file_ext in ['.jpg', '.jpeg', '.png', '.gif']:
-        method = 'sendPhoto'
-        file_field = 'photo'
-    elif file_ext in ['.mp4', '.mov', '.avi', '.mkv']:
-        method = 'sendVideo'
-        file_field = 'video'
-    else:
-        logger.warning(f"❌ Unsupported media type: {file_ext}")
-        return False
-
-    url = f"https://tapi.bale.ai/bot{BALE_BOT_TOKEN}/{method}"
-    data = {
-        "chat_id": BALE_CHAT_ID,
-        "caption": caption
-    }
+def send_file_to_bale(file_path, caption=None):
+    file_name = os.path.basename(file_path)
+    ext = os.path.splitext(file_name)[-1].lower()
+    success = False
 
     for attempt in range(3):
         try:
-            with open(media_path, 'rb') as f:
-                files = {file_field: f}
-                response = requests.post(url, data=data, files=files)
-                if response.ok:
-                    logger.info("✅ Media sent to Bale")
-                    return True
+            with open(file_path, 'rb') as f:
+                files = {'document': (file_name, f)}
+                data = {'chat_id': bale_chat_id}
+                if caption:
+                    data['caption'] = caption
+                r = requests.post(f"{BALE_API}/sendDocument", data=data, files=files)
+                if r.status_code == 200:
+                    print(f"[✅ File] Sent: {file_name}")
+                    success = True
+                    break
                 else:
-                    logger.warning(f"⚠️ Bale media error: {response.text}")
+                    print(f"[❌ File] Attempt {attempt+1} failed: {r.status_code}")
         except Exception as e:
-            logger.error(f"❌ Media send error: {e}")
-        await asyncio.sleep(2)
-    return False
+            print(f"[⚠️ File Error] Attempt {attempt+1}: {e}")
 
+    if not success:
+        preview_path = f"{file_path}.jpg"
+        if ext in [".mp4", ".mov", ".mkv"]:
+            subprocess.run([
+                "ffmpeg", "-i", file_path, "-ss", "00:00:01.000", "-vframes", "1", preview_path,
+                "-y", "-loglevel", "error"
+            ])
+            caption_fallback = (caption or "") + "\n#video_failed"
+            if os.path.exists(preview_path):
+                send_fallback_preview(preview_path, caption_fallback)
+                os.remove(preview_path)
+        elif ext in [".jpg", ".jpeg", ".png", ".webp"]:
+            caption_fallback = (caption or "") + "\n#image_failed"
+            send_text_to_bale(caption_fallback)
+    os.remove(file_path)
 
-@client.on(events.NewMessage(chats=SOURCE_CHANNELS))
+@client.on(events.NewMessage(chats=source_channels))
 async def handler(event):
-    logger.info("📥 New message received")
-    msg = event.message
-    text = msg.text or ""
-    media_path = None
+    message = event.message
+    caption = message.text or ""
 
-    if msg.media:
-        try:
-            media_path = await msg.download_media(file="temp")
-            sent = await send_media_to_bale(media_path, caption=text)
-            if not sent:
-                await send_text_to_bale("[❌ Failed to send media] " + (text or ""))
-            os.remove(media_path)
-        except Exception as e:
-            logger.error(f"❌ Media handling error: {e}")
-            await send_text_to_bale("[❌ Error downloading media] " + (text or ""))
-    else:
-        await send_text_to_bale(text)
+    if message.text and not message.media:
+        send_text_to_bale(message.text)
+        return
 
+    try:
+        file_path = f"temp/{message.id}"
+        await client.download_media(message, file_path)
+        if os.path.exists(file_path):
+            send_file_to_bale(file_path, caption)
+    except Exception as e:
+        print(f"[❌ Download/Send Error] {e}")
 
-if __name__ == '__main__':
-    logger.info("🚀 Starting Telegram client")
-    client.start()
-    client.run_until_disconnected()
+client.start()
+print("🤖 Bot is running. Listening for messages...")
+client.run_until_disconnected()
