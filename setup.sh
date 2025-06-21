@@ -1,13 +1,18 @@
 #!/bin/bash
 
-echo "📦 Installing Telegram-to-Bale Bot"
-echo "-----------------------------------"
+echo "📦 Installing Telegram-to-Bale Bot with isolated Python environment"
+echo "--------------------------------------------------------------------"
 
-# نصب پکیج‌های سیستمی مورد نیاز
-apt update -y && apt install python3 python3-pip git curl ffmpeg -y
+# نصب پکیج‌های سیستمی
+apt update -y && apt install python3 python3-pip python3-venv git curl ffmpeg -y
 
-# نصب کتابخانه‌های پایتون مورد نیاز
-pip3 install --break-system-packages telethon requests python-dotenv pillow
+# ساخت virtualenv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# نصب پکیج‌های پایتونی در محیط ایزوله
+pip install --upgrade pip
+pip install telethon requests python-dotenv pillow
 
 # دریافت اطلاعات از کاربر
 read -p "👉 Enter your Telegram API ID: " api_id
@@ -37,7 +42,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=$(pwd)
-ExecStart=$(which python3) $(pwd)/main.py
+ExecStart=$(pwd)/.venv/bin/python main.py
 Restart=on-failure
 RestartSec=5
 User=root
@@ -53,14 +58,13 @@ systemctl start tg2bale.service
 
 echo "✅ Service installed and started: tg2bale.service"
 
-# نصب CLI tool به نام teltobale با مسیر دقیق
+# نصب CLI tool به نام teltobale
 echo "⚙️ Installing 'teltobale' CLI command..."
 
 CLI_PATH="$(realpath ./cli.py)"
-
 cat > /usr/local/bin/teltobale <<EOF
 #!/bin/bash
-python3 $CLI_PATH "\$@"
+$(pwd)/.venv/bin/python $CLI_PATH "\$@"
 EOF
 
 chmod +x /usr/local/bin/teltobale
