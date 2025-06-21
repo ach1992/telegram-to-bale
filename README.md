@@ -1,29 +1,64 @@
-# 📲 Telegram to Bale Forwarder
+# 🤖 Telegram to Bale Forwarder Bot
 
-A lightweight Python script that forwards messages from **public Telegram channels** to a **Bale channel** using Bale Bot API.
+A fully automated Python bot that listens to specific Telegram channels and forwards all messages (text, photos, videos, and documents) to your **Bale messenger** channel using the Bale Bot API.
 
 ---
 
 ## 🚀 Features
 
-- 📡 Monitors multiple public Telegram channels
-- 📤 Sends messages to your Bale bot/channel in real-time
-- 🔐 Uses `.env` file for sensitive data (created automatically)
-- ✅ Fully automated setup with one-liner installer
+- ✅ Forward **text messages**
+- 🖼 Forward **images** via Bale's `sendPhoto`
+- 📹 Forward **videos** via Bale's `sendVideo`
+- 📄 Forward **documents** as-is
+- 🔁 Retry sending files up to 3 times on failure
+- 🖼 Generate preview image for failed video uploads using `ffmpeg`
+- ⚙️ Automatically detects file type and selects correct Bale API method
+- 📡 systemd service integration for auto-start
+- 🧰 Command-line control tool (`teltobale`)
 
 ---
 
-## 🔧 Requirements
+## 🔑 What You’ll Need
 
-- Python 3.6+
-- A Telegram account (to create `api_id` / `api_hash`)
-- A Bale bot token (created via `@BotFatherBale`)
-- Your Bale channel's `chat_id`
-- Public Telegram channel usernames (e.g. `@bbc`, `@channel1`)
+To use this bot, you’ll need a few keys and IDs. Here’s what they are and how to get them:
+
+| Name | Description | How to Get It |
+|------|-------------|---------------|
+| **API ID** | Your Telegram app's API ID | Create a Telegram app at [my.telegram.org](https://my.telegram.org/auth) and you’ll receive an API ID. |
+| **API Hash** | Your Telegram app's secret hash | Comes with the API ID above on Telegram's developer portal. |
+| **Phone Number** | Your phone number used to log in to Telegram | Enter it in international format (e.g., +989123456789). |
+| **Bale Bot Token** | Token for your bot on Bale Messenger | Create a bot at [tapi.bale.ai](https://tapi.bale.ai), and get your bot token (starts with `bot...`). |
+| **Bale Channel's Chat ID** | Numeric ID of your **Bale channel** | Add the bot as an admin, send a message in your Bale channel, then call: `https://tapi.bale.ai/bot<YourToken>/getUpdates` and copy the numeric `chat_id` (starts with `-100`). |
+| **Telegram Channels** | Telegram channel usernames to monitor | Example: `@newsch1,@mediahub2` (you must be a member). |
+
+> ⚠️ Be sure to add your Bale bot as **admin** in your Bale channel.
 
 ---
 
-## ⚙️ Installation (One-Liner)
+## 📦 Requirements
+
+- Python 3.7+
+- Debian/Ubuntu Linux (recommended)
+- `ffmpeg` installed
+- Internet access (for both Telegram and Bale)
+
+---
+
+## ⚙️ Quick Install
+
+Just run this single line:
 
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh)
+```bash
+
+---
+
+## This will:
+
+- Clone the project
+- Install all dependencies
+- Ask for your Telegram/Bale credentials
+- Create a Telegram session
+- Create and run systemd service
+- Register teltobale CLI tool
