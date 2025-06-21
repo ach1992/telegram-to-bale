@@ -127,13 +127,13 @@ teltobale uninstall
 ## ❗ Troubleshooting
 
 - Media not sending?
-Ensure proper file extensions, and that ffmpeg is installed.
+-- Ensure proper file extensions, and that ffmpeg is installed.
 
 - 401/403 errors from Bale?
-Your bot may not be added to the channel as admin, or token is wrong.
+-- Your bot may not be added to the channel as admin, or token is wrong.
 
 - Telegram login fails?
-Make sure your server is not blocked by Telegram.
+-- Make sure your server is not blocked by Telegram.
 
 ---
 
