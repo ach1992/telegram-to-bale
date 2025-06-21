@@ -140,3 +140,7 @@ teltobale uninstall
 ## 📃 License
 
 MIT License © 2025 ach1992
+
+---
+
+## ⭐ Star History
