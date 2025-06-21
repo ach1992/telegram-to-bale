@@ -144,3 +144,5 @@ MIT License © 2025 ach1992
 ---
 
 ## ⭐ Star History
+
+[![Stargazers over time](https://starchart.cc/ach1992/telegram-to-bale.svg)](https://starchart.cc/ach1992/telegram-to-bale)
