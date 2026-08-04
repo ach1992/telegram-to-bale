@@ -43,7 +43,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           shellcheck install.sh setup.sh uninstall.sh tests/test_scripts.sh tests/integration_install.sh
-          tests/test_scripts.sh
+          bash tests/test_scripts.sh
 
       - name: Create virtual environment
         shell: bash
@@ -65,4 +65,4 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          tests/integration_install.sh
+          bash tests/integration_install.sh
