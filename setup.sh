@@ -296,6 +296,7 @@ ensure_runtime_defaults() {
   grep -qE '^TG2BALE_RETRY_BASE_SECONDS=' "${ENV_FILE}" || printf 'TG2BALE_RETRY_BASE_SECONDS=1\n' >> "${ENV_FILE}"
   grep -qE '^TG2BALE_WORKERS=' "${ENV_FILE}" || printf 'TG2BALE_WORKERS=1\n' >> "${ENV_FILE}"
   grep -qE '^TG2BALE_QUEUE_SIZE=' "${ENV_FILE}" || printf 'TG2BALE_QUEUE_SIZE=100\n' >> "${ENV_FILE}"
+  grep -qE '^TG2BALE_TEXT_LIMIT=' "${ENV_FILE}" || printf 'TG2BALE_TEXT_LIMIT=4096\n' >> "${ENV_FILE}"
   grep -qE '^TG2BALE_LOG_LEVEL=' "${ENV_FILE}" || printf 'TG2BALE_LOG_LEVEL=INFO\n' >> "${ENV_FILE}"
   chown root:"${APP_GROUP}" "${ENV_FILE}"
   chmod 0640 "${ENV_FILE}"
@@ -329,6 +330,7 @@ write_configuration() {
     printf 'TG2BALE_RETRY_BASE_SECONDS=1\n'
     printf 'TG2BALE_WORKERS=1\n'
     printf 'TG2BALE_QUEUE_SIZE=100\n'
+    printf 'TG2BALE_TEXT_LIMIT=4096\n'
     printf 'TG2BALE_LOG_LEVEL=INFO\n'
   } > "${temp_env}"
   install -m 0640 -o root -g "${APP_GROUP}" "${temp_env}" "${ENV_FILE}"
