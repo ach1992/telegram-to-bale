@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "agent/**"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  distro-tests:
+    name: ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - ubuntu:26.04
+          - debian:12
+          - debian:13
+
+    steps:
+      - name: Install test prerequisites
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            bash ca-certificates ffmpeg git passwd python3 python3-pip python3-venv shellcheck systemd util-linux
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate shell scripts
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          shellcheck install.sh setup.sh uninstall.sh tests/test_scripts.sh tests/integration_install.sh
+          tests/test_scripts.sh
+
+      - name: Create virtual environment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m venv .venv
+          .venv/bin/python -m pip install --disable-pip-version-check --upgrade pip
+          .venv/bin/python -m pip install --disable-pip-version-check -r requirements.txt
+          .venv/bin/python -m pip check
+
+      - name: Run Python tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          .venv/bin/python -m compileall -q main.py authenticate.py cli.py setup.py tests
+          .venv/bin/python -m unittest discover -s tests -v
+
+      - name: Run installer integration test
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          tests/integration_install.sh
