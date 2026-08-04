@@ -364,11 +364,6 @@ stage_application() {
 }
 
 activate_application() {
-  if systemctl is-active --quiet "${SERVICE_NAME}"; then
-    PREVIOUSLY_ACTIVE=1
-  fi
-  systemctl stop "${SERVICE_NAME}" >/dev/null 2>&1 || true
-
   if [[ -d "${APP_DIR}" ]]; then
     BACKUP_DIR="$(mktemp -d /opt/telegram-to-bale.backup.XXXXXX)"
     rmdir -- "${BACKUP_DIR}"
@@ -524,6 +519,12 @@ if [[ -f "${CLI_FILE}" ]]; then
 fi
 
 trap rollback ERR
+
+# Stop a legacy/current service before copying its SQLite session and replacing files.
+if systemctl is-active --quiet "${SERVICE_NAME}"; then
+  PREVIOUSLY_ACTIVE=1
+  systemctl stop "${SERVICE_NAME}"
+fi
 
 # Migration mutates persistent state, so it runs only after rollback snapshots exist.
 migrate_legacy_installation
