@@ -43,6 +43,7 @@ def main() -> int:
                 "TG2BALE_RETRY_BASE_SECONDS=1",
                 "TG2BALE_WORKERS=1",
                 "TG2BALE_QUEUE_SIZE=100",
+                "TG2BALE_TEXT_LIMIT=4096",
                 "TG2BALE_LOG_LEVEL=INFO",
                 "",
             ]
