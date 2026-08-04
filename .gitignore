@@ -1,3 +1,10 @@
 .env
+.venv/
+data/
+temp/
 __pycache__/
-session*
+*.py[cod]
+*.session
+*.session-journal
+.pytest_cache/
+.coverage
