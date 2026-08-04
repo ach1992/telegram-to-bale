@@ -1,154 +1,188 @@
-<p align="center">
- <a href="./README.md">
-   English
- </a>
-</p>
+<p align="center"><a href="./README.md">English</a></p>
 
-# 🤖 ربات انتقال محتوا از تلگرام به بله
+# ربات انتقال محتوا از تلگرام به بله
 
-رباتی تمام‌اتوماتیک با پایتون که پیام‌های دریافتی از کانال‌های مشخص تلگرام (متن، عکس، ویدیو و فایل‌ها) را به کانال پیام رسان بله شما از طریق API ربات بله ارسال می‌کند.
+یک سرویس پایتونی مناسب استفاده عملیاتی که کانال‌های مشخص تلگرام را با یک نشست کاربری مانیتور می‌کند و پیام متنی، تصویر، ویدیو و فایل را از طریق API ربات بله به کانال مقصد می‌فرستد.
 
----
+## امکانات اصلی
 
-## 🚀 امکانات
+- انتقال متن، تصویر، ویدیو و سند
+- صف پردازش محدود برای جلوگیری از متوقف‌شدن event loop تلگرام
+- `timeout` شبکه، `exponential backoff` و retry برای خطاهای موقت و rate limit
+- تقسیم خودکار متن‌های طولانی
+- ساخت تصویر پیش‌نمایش با `ffmpeg` در صورت شکست ارسال ویدیو
+- اجرای سرویس با کاربر محدود و اختصاصی `tg2bale` به‌جای `root`
+- نصب تکرارپذیر، migration نصب قدیمی و rollback در صورت شکست
+- نگهداری امن تنظیمات در `/etc` و session در `/var/lib`
+- ابزار خط فرمان برای وضعیت، لاگ، restart، عیب‌یابی و حذف امن
+- تست CI روی نسخه‌های پشتیبانی‌شده Debian و Ubuntu
 
-- ✅ ارسال **پیام‌های متنی**
-- 🖼 ارسال **تصاویر** با استفاده از متد `sendPhoto` بله
-- 📹 ارسال **ویدیوها** با استفاده از متد `sendVideo` بله
-- 📄 ارسال **سندها** (فایل‌ها) به‌صورت مستقیم
-- 🔁 تلاش خودکار تا ۳ بار برای ارسال فایل در صورت شکست
-- 🖼 تولید تصویر پیش‌نمایش در صورت شکست ارسال ویدیو با استفاده از `ffmpeg`
-- ⚙️ تشخیص خودکار نوع فایل و انتخاب متد مناسب API بله
-- 📡 پشتیبانی از systemd برای اجرای خودکار پس از ریبوت
-- 🧰 ابزار خط فرمان (`teltobale`) برای کنترل سریع
+## سیستم‌عامل‌های پشتیبانی‌شده
 
----
+- Debian 12 و جدیدتر
+- Ubuntu 22.04 LTS و جدیدتر
+- Python 3.10 و جدیدتر
 
-## 🔑 نیازمندی‌ها
+ماتریس CI فعلی Debian 12/13 و Ubuntu 22.04/24.04/26.04 را بررسی می‌کند.
 
-برای استفاده از این ربات، به چند کلید و شناسه نیاز دارید. در جدول زیر، توضیحات و روش دریافت آن‌ها آورده شده است:
+## اطلاعات موردنیاز
 
-| نام | توضیح | روش دریافت |
-|-----|-------|------------|
-| **API ID** | شناسه API اپلیکیشن تلگرام شما | از [my.telegram.org](https://my.telegram.org/auth) اپ بسازید و API ID بگیرید. |
-| **API Hash** | کد محرمانه مربوط به اپ تلگرام شما | همراه با API ID در پنل توسعه‌دهنده تلگرام قابل دریافت است. |
-| **شماره تلفن** | شماره‌ای که با آن به تلگرام لاگین می‌کنید | با فرمت بین‌المللی وارد کنید (مثلاً: ‎`+989123456789`). |
-| **توکن ربات بله** | توکن رباتی که در بله ساخته‌اید | در [tapi.bale.ai](https://tapi.bale.ai) ربات بسازید و توکن را دریافت کنید. با `bot...` شروع می‌شود. |
-| **شناسه عددی چت کانال بله** | آیدی عددی کانال بله شما | ربات را ادمین کانال بله کنید، یک پیام ارسال کنید و سپس با زدن این آدرس: `https://tapi.bale.ai/bot<توکن>/getUpdates` آیدی عددی را بردارید. |
-| **کانال‌های تلگرام** | لیست نام کاربری کانال‌های تلگرام برای مانیتورینگ | مثال: `@newsch1,@mediahub2` (باید عضو آن‌ها باشید). |
+- `API_ID` و `API_HASH` تلگرام از `my.telegram.org`
+- شماره تلگرامی که به تمام کانال‌های مبدا دسترسی دارد
+- توکن ربات بله
+- شناسه کانال مقصد بله
+- افزودن ربات بله به کانال مقصد با دسترسی کافی
 
-> ⚠️ حتماً ربات بله را به عنوان **ادمین** در کانال بله خود اضافه کنید.
+## نصب سریع
 
----
-
-## 📦 پیش‌نیازها
-
-- پایتون نسخه ۳.۷ یا بالاتر
-- سیستم‌عامل لینوکس Debian/Ubuntu (پیشنهاد می‌شود)
-- نصب بودن `ffmpeg`
-- دسترسی به اینترنت (برای تلگرام و بله)
-
----
-
-## ⚙️ نصب سریع
-
-تنها با یک خط دستور زیر:
+برای حفظ حالت تعاملی نصب، دستور زیر را اجرا کنید:
 
 ```bash
-bash <(curl -Ls https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh)
+sudo bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh)'
 ```
 
-این دستور:
+نصب‌کننده این کارها را انجام می‌دهد:
 
-- پروژه را کلون می‌کند
-- پیش‌نیازها را نصب می‌کند
-- اطلاعات تلگرام و بله را از شما می‌گیرد
-- فایل session را ایجاد می‌کند
-- سرویس systemd را می‌سازد و اجرا می‌کند
-- ابزار `teltobale` را نصب می‌کند
+1. سازگاری سیستم‌عامل را بررسی می‌کند.
+2. بسته‌های لازم مانند `python3-venv` و `ffmpeg` را نصب می‌کند.
+3. برنامه را در `/opt/telegram-to-bale` قرار می‌دهد.
+4. کاربر سیستمی محدود `tg2bale` را می‌سازد.
+5. اطلاعات حساس را با دسترسی محدود در `/etc/telegram-to-bale.env` ذخیره می‌کند.
+6. session تلگرام را در `/var/lib/tg2bale` می‌سازد.
+7. سرویس `tg2bale.service` را نصب و اجرا می‌کند.
+8. فرمان سراسری `teltobale` را نصب می‌کند.
 
----
+اجرای دوباره همین دستور، برنامه را به‌روزرسانی می‌کند و تنظیمات و session قبلی را نگه می‌دارد. اگر نصب قدیمی دارای `.env` و `session.session` محلی باشد و unit قبلی systemd قابل تشخیص باشد، migration خودکار انجام می‌شود.
 
-## 🔁 اجرای ربات
+### نصب غیرتعاملی
 
-بعد از نصب، ربات به‌صورت خودکار در پس‌زمینه اجرا می‌شود. برای بررسی یا کنترل آن:
+برای نصب اولیه می‌توان تنظیمات را از environment ارسال کرد. ایجاد session تلگرام همچنان تعاملی است، مگر اینکه از `--skip-auth` استفاده شود.
 
 ```bash
-sudo systemctl status tg2bale.service
+sudo env \
+  API_ID='12345' \
+  API_HASH='replace-me' \
+  BALE_BOT_TOKEN='replace-me' \
+  BALE_CHAT_ID='replace-me' \
+  SOURCE_CHANNELS='@channel_one,@channel_two' \
+  bash -c 'bash <(curl -fsSL https://raw.githubusercontent.com/ach1992/telegram-to-bale/main/install.sh) --non-interactive --skip-auth'
+```
+
+احراز هویت در مرحله بعد:
+
+```bash
+sudo -u tg2bale /opt/telegram-to-bale/.venv/bin/python \
+  /opt/telegram-to-bale/authenticate.py \
+  --env-file /etc/telegram-to-bale.env
 sudo systemctl restart tg2bale.service
 ```
 
----
-
-## 💻 ابزار خط فرمان: teltobale
-
-ابزاری جهانی برای کنترل سریع ربات:
+## مدیریت سرویس
 
 ```bash
-teltobale status     # بررسی وضعیت ربات
-teltobale restart    # ریستارت ربات
-teltobale stop       # توقف ربات
-teltobale uninstall  # حذف کامل ربات
+teltobale status
+sudo teltobale start
+sudo teltobale stop
+sudo teltobale restart
+teltobale logs -n 200
+teltobale logs --follow
+sudo teltobale doctor
 ```
 
----
+دستورات مستقیم systemd:
 
-## 🧪 تنظیم برای توسعه‌دهنده‌ها
+```bash
+sudo systemctl status tg2bale.service
+sudo journalctl -u tg2bale.service -n 100 --no-pager
+```
+
+## تنظیمات
+
+فایل production در مسیر `/etc/telegram-to-bale.env` قرار دارد.
+
+| متغیر | اجباری | پیش‌فرض | کاربرد |
+|---|---:|---:|---|
+| `API_ID` | بله | - | شناسه اپلیکیشن تلگرام |
+| `API_HASH` | بله | - | هش اپلیکیشن تلگرام |
+| `BALE_BOT_TOKEN` | بله | - | توکن ربات بله |
+| `BALE_CHAT_ID` | بله | - | شناسه کانال یا چت مقصد بله |
+| `SOURCE_CHANNELS` | بله | - | کانال‌های تلگرام با جداکننده کاما |
+| `TG2BALE_DATA_DIR` | خیر | `/var/lib/tg2bale` در production | مسیر session و فایل‌های موقت |
+| `TG2BALE_REQUEST_TIMEOUT` | خیر | `120` | timeout خواندن پاسخ بله برحسب ثانیه |
+| `TG2BALE_MAX_RETRIES` | خیر | `3` | تعداد تلاش ارسال، بین ۱ تا ۱۰ |
+| `TG2BALE_RETRY_BASE_SECONDS` | خیر | `1` | زمان پایه backoff |
+| `TG2BALE_WORKERS` | خیر | `1` | تعداد worker بین ۱ تا ۸؛ مقدار ۱ ترتیب کلی را حفظ می‌کند |
+| `TG2BALE_QUEUE_SIZE` | خیر | `100` | حداکثر پیام‌های منتظر در صف |
+| `TG2BALE_TEXT_LIMIT` | خیر | `4096` | اندازه هر بخش متن ارسالی |
+| `TG2BALE_LOG_LEVEL` | خیر | `INFO` | سطح logging |
+
+بعد از ویرایش تنظیمات:
+
+```bash
+sudo chmod 0640 /etc/telegram-to-bale.env
+sudo chown root:tg2bale /etc/telegram-to-bale.env
+sudo teltobale doctor
+sudo teltobale restart
+```
+
+## توسعه محلی
 
 ```bash
 git clone https://github.com/ach1992/telegram-to-bale.git
 cd telegram-to-bale
 python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python setup.py
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python setup.py
+.venv/bin/python authenticate.py
+.venv/bin/python main.py
 ```
 
----
-
-## 🧼 حذف کامل
+اجرای تست‌ها:
 
 ```bash
-teltobale uninstall
+python3 -m compileall -q main.py authenticate.py cli.py setup.py tests
+python3 -m unittest discover -s tests -v
+bash tests/test_scripts.sh
 ```
 
----
+## حذف برنامه
 
-## 📁 ساختار پروژه
+حذف برنامه با نگهداری تنظیمات و session برای نصب مجدد:
 
-```
-├── main.py               # منطق اصلی ربات
-├── cli.py                # ابزار خط فرمان
-├── setup.py              # جادوی نصب و تنظیم
-├── setup.sh              # اسکریپت نصب کامل
-├── install.sh            # نصب با curl
-├── uninstall.sh          # حذف کامل
-├── requirements.txt
-├── .env                  # فایل محیطی (به‌صورت خودکار ساخته می‌شود)
-├── temp/                 # پوشه موقت برای فایل‌های دانلودی
+```bash
+sudo teltobale uninstall
 ```
 
----
+حذف دائمی برنامه، تنظیمات، session و کاربر سرویس:
 
-## ❗ رفع مشکلات
+```bash
+sudo teltobale uninstall --purge
+```
 
-### رسانه‌ها ارسال نمی‌شوند؟
-- پسوند فایل بررسی شود و `ffmpeg` نصب باشد.
+## عیب‌یابی
 
-### ارور ۴۰۱ یا ۴۰۳ از بله؟
-- احتمالاً ربات به عنوان ادمین به کانال اضافه نشده یا توکن اشتباه است.
+ابتدا diagnostic را اجرا کنید:
 
-### لاگین به تلگرام با شکست مواجه می‌شود؟
-- بررسی کنید سرور شما توسط تلگرام مسدود نشده باشد.
+```bash
+sudo teltobale doctor
+```
 
----
+سپس لاگ‌ها را ببینید:
 
-## 📃 لایسنس
+```bash
+teltobale logs -n 200
+```
 
-لایسنس MIT © ۲۰۲۵ ach1992
+دلایل رایج شامل session احراز هویت‌نشده، نداشتن دسترسی به کانال مبدا، توکن یا chat ID اشتباه بله، دسترسی ناکافی ربات در کانال مقصد، محدودیت شبکه، rate limit یا ردشدن فرمت رسانه توسط API مقصد است.
 
----
+## نکات امنیتی
 
-## ⭐ تاریخچه ستاره‌ها
+- سرویس با `root` اجرا نمی‌شود.
+- اطلاعات حساس خارج از پوشه برنامه و با mode برابر `0640` نگهداری می‌شوند.
+- unit سرویس محدودیت‌های filesystem، privilege، namespace، kernel و capability دارد.
+- session و فایل‌های موقت در `/var/lib/tg2bale` قرار می‌گیرند.
+- فایل‌های `.env` و `.session` را هرگز commit نکنید.
 
-[![Stargazers over time](https://starchart.cc/ach1992/telegram-to-bale.svg)](https://starchart.cc/ach1992/telegram-to-bale)
+## مجوز
+
+MIT License، Copyright 2025-2026 ach1992.
