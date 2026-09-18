@@ -20,6 +20,7 @@
 - Telegram session and temporary media are stored in `/var/lib/tg2bale`.
 - Python dependencies are installed only in an isolated virtual environment.
 - Minimum supported Python version is 3.10.
+- GitHub Actions now uses `actions/checkout@v7` instead of the deprecated Node.js 20-based v4 runtime.
 
 ### Fixed
 
