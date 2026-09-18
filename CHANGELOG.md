@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 - 2026-08-04
+## 2.0.0 - 2026-09-18
 
 ### Added
 
@@ -31,3 +31,5 @@
 - Relative paths that depended on the service working directory.
 - Root service execution and overly broad filesystem access.
 - Unsafe repeated installation and incomplete uninstall behavior.
+- Deferred-auth installs leaving an unauthenticated service enabled across reboot.
+- Installer rollback not restoring the previous systemd enablement state.
