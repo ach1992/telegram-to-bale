@@ -78,7 +78,7 @@ Authenticate later with:
 sudo -u tg2bale /opt/telegram-to-bale/.venv/bin/python \
   /opt/telegram-to-bale/authenticate.py \
   --env-file /etc/telegram-to-bale.env
-sudo systemctl restart tg2bale.service
+sudo systemctl enable --now tg2bale.service
 ```
 
 ## Management CLI
