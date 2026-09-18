@@ -15,6 +15,7 @@ BACKUP_DIR=""
 ENV_BACKUP=""
 SERVICE_BACKUP=""
 PREVIOUSLY_ACTIVE=0
+PREVIOUSLY_ENABLED=0
 INSTALL_SUCCEEDED=0
 ENV_EXISTED=0
 SERVICE_EXISTED=0
@@ -100,6 +101,11 @@ rollback() {
       rm -f -- "${CLI_FILE}"
     fi
     systemctl daemon-reload >/dev/null 2>&1 || true
+    if [[ "${PREVIOUSLY_ENABLED}" -eq 1 ]]; then
+      systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    else
+      systemctl disable "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    fi
     if [[ "${PREVIOUSLY_ACTIVE}" -eq 1 ]]; then
       systemctl start "${SERVICE_NAME}" >/dev/null 2>&1 || true
     fi
@@ -431,7 +437,6 @@ WantedBy=multi-user.target
 EOF
   chmod 0644 "${SERVICE_FILE}"
   systemctl daemon-reload
-  systemctl enable "${SERVICE_NAME}" >/dev/null
 }
 
 write_cli() {
@@ -476,12 +481,13 @@ validate_installation() {
     --env-file "${ENV_FILE}" --check-config
 
   if [[ "${SKIP_AUTH}" -eq 1 ]]; then
-    systemctl stop "${SERVICE_NAME}" >/dev/null 2>&1 || true
-    log "Service installed but not started because Telegram authentication was skipped."
+    systemctl disable --now "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    log "Service installed but disabled because Telegram authentication was skipped."
     return
   fi
 
   if session_is_authorized; then
+    systemctl enable "${SERVICE_NAME}" >/dev/null
     systemctl restart "${SERVICE_NAME}"
     sleep 2
     if ! systemctl is-active --quiet "${SERVICE_NAME}"; then
@@ -490,8 +496,8 @@ validate_installation() {
     fi
     log "Service is active."
   else
-    systemctl stop "${SERVICE_NAME}" >/dev/null 2>&1 || true
-    log "Service installed but not started because Telegram authentication is incomplete."
+    systemctl disable --now "${SERVICE_NAME}" >/dev/null 2>&1 || true
+    log "Service installed but disabled because Telegram authentication is incomplete."
   fi
 }
 
@@ -519,6 +525,11 @@ if [[ -f "${CLI_FILE}" ]]; then
 fi
 
 trap rollback ERR
+
+# Capture enablement separately from runtime activity so rollback can restore both.
+if systemctl is-enabled --quiet "${SERVICE_NAME}" >/dev/null 2>&1; then
+  PREVIOUSLY_ENABLED=1
+fi
 
 # Stop a legacy/current service before copying its SQLite session and replacing files.
 if systemctl is-active --quiet "${SERVICE_NAME}"; then
