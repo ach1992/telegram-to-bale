@@ -3,6 +3,8 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 FAKE_BIN="$(mktemp -d)"
+SYSTEMCTL_LOG="${FAKE_BIN}/systemctl.log"
+export SYSTEMCTL_LOG
 
 cleanup() {
   rm -rf -- "${FAKE_BIN}"
@@ -11,8 +13,9 @@ trap cleanup EXIT
 
 cat > "${FAKE_BIN}/systemctl" <<'EOF'
 #!/bin/sh
+printf '%s\n' "$*" >> "${SYSTEMCTL_LOG:?}"
 case "${1:-}" in
-  is-active)
+  is-active|is-enabled)
     exit 1
     ;;
   *)
@@ -40,6 +43,7 @@ bash "${ROOT_DIR}/setup.sh" \
 [[ -f /etc/telegram-to-bale.env ]]
 [[ -d /var/lib/tg2bale ]]
 id -u tg2bale >/dev/null
+grep -Fx 'disable --now tg2bale.service' "${SYSTEMCTL_LOG}" >/dev/null
 
 /opt/telegram-to-bale/.venv/bin/python \
   /opt/telegram-to-bale/main.py \
